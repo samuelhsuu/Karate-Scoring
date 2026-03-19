@@ -1,0 +1,17 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# dataset images/labels
+dataset/
+
+# System files
+.DS_Store
+
+# VS Code + files
+.vscode/
+*.docx
+*.mp4
