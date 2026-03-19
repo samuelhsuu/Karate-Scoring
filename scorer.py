@@ -22,7 +22,8 @@ last_results = [] # previous frame detections
 
 fps_history = deque(maxlen=30) # Double ended queue of the last 30 frames
 
-font = cv2.FONT_HERSHEY_SIMPLEX
+detect_font = cv2.FONT_HERSHEY_PLAIN
+UI_font = cv2.FONT_HERSHEY_SIMPLEX
 
 # Draw a info panel on rhs
 def draw_sidebar(frame, fps, detection_counts, total_objects):
@@ -42,7 +43,7 @@ def draw_sidebar(frame, fps, detection_counts, total_objects):
   LINE_H = 26
 
   # Title
-  cv2.putText(frame, "Menu", (x,y), font, 0.5, (100, 100, 140), 1)
+  cv2.putText(frame, "Menu", (x,y), UI_font, 0.5, (100, 100, 140), 1)
   y+=LINE_H
 
   # FPS
@@ -51,7 +52,7 @@ def draw_sidebar(frame, fps, detection_counts, total_objects):
     fps_color = (0, 0, 255)
   elif(fps>15):
     fps_color = (0, 255, 0)
-  cv2.putText(frame, f"FPS {fps:.1f}", (x,y), font, 0.55, fps_color, 1)
+  cv2.putText(frame, f"FPS {fps:.1f}", (x,y), UI_font, 0.55, fps_color, 1)
   y+=LINE_H + 6
 
   # Divider
@@ -59,17 +60,17 @@ def draw_sidebar(frame, fps, detection_counts, total_objects):
   y+=12
 
   # Per-class counts
-  cv2.putText(frame, "Class        Count", (x,y), font, 0.42, (80, 80, 110), 1)
+  cv2.putText(frame, "Class        Count", (x,y), UI_font, 0.42, (80, 80, 110), 1)
   y+=LINE_H
 
   for class_name, count in sorted(detection_counts.items(), key = lambda item: -item[1]):
     text = f"{class_name[:12]:<12} { count }"
-    cv2.putText(frame, text, (x,y), font, 0.48, (200, 200, 220), 1)
+    cv2.putText(frame, text, (x,y), UI_font, 0.48, (200, 200, 220), 1)
     y+=LINE_H
     if y>h-40:
       break
   # Total
-  cv2.putText(frame, f"Total: {total_objects}", (x, h-20), font, 0.5, (100, 200, 255), 1)
+  cv2.putText(frame, f"Total: {total_objects}", (x, h-20), UI_font, 0.5, (100, 200, 255), 1)
 
 while True:
   # Frame is a 3d array containing image data
@@ -103,10 +104,10 @@ while True:
       cv2.rectangle(frame, (x1,y1), (x2, y2), (0,255,100), 1)
 
       text = f"{label} {confidence:.0%}"
-      (tw,th),_ = cv2.getTextSize(text, font, 0.6, 2)
+      (tw,th),_ = cv2.getTextSize(text, detect_font, 1, 2)
       cv2.rectangle(frame, (x1, y1-th-8), (x1+tw+6,y1), (0,255,100), -1)
 
-      cv2.putText(frame, text, (x1+3, y1-4), font, 0.6, (0,0,0), 2)
+      cv2.putText(frame, text, (x1+3, y1-4), detect_font, 1, (0,0,0), 2)
 
   curr_time = time.time()
   fps_history.append(curr_time - prev_time)
