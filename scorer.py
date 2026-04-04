@@ -11,6 +11,14 @@ if not cap.isOpened():
   print("Error: could not open camera")
   exit()
 
+# Set up for recording video
+frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps_out = 15 # video fps
+fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+out = cv2.VideoWriter("output.mp4", fourcc, fps_out, (frame_width, frame_height))
+
+
 # Objects with confidence <0.3 are filtered out
 CONFIDENCE_THRESHOLD = .3
 prev_time = time.time()
@@ -122,8 +130,10 @@ while True:
   draw_sidebar(frame, avg_fps, detection_counts, total_objects) # draw the sidebar
 
   cv2.imshow("Object Detection", frame)
+  out.write(frame) # write to video file
 
   if cv2.waitKey(1) & 0xFF == ord("q"):
     break
 cap.release()
+out.release()
 cv2.destroyAllWindows()
