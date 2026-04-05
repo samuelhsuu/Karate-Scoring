@@ -15,3 +15,4 @@ Have an automated scoring system that can be used to assist referees in real mat
 1. Create a virtual environment and activate it
 2. pip install -r requirements.txt
 3. Download modified dataset from https://drive.google.com/drive/folders/15uquvfbVMLcIIaBK5-x_I5-eAHs1quFz?usp=drive_link
+*  To download trained model directly follow the link /Training Set 2/weights/best v2.pt
