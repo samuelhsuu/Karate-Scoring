@@ -3,8 +3,9 @@ from ultralytics import YOLO
 import time
 from collections import deque, defaultdict
 
-# Load model weights, human_body_detector or hand_detector
-model = YOLO("dataset/detector v2.pt")
+# Load model weights
+karate_model = YOLO("dataset/karate detector.pt")
+body_model = YOLO("dataset/head-body detector.pt")
 # Open camera, can also use filepath for video
 cap = cv2.VideoCapture("test.mp4")
 if not cap.isOpened():
@@ -27,6 +28,9 @@ prev_time = time.time()
 SKIP_FRAMES = 2
 frame_count = 0
 last_results = []  # previous frame detections
+
+last_body_results = [] # previous body detections
+BODY_SKIP_FRAMES = 3 # Head and body move less than hands and feet
 
 fps_history = deque(maxlen=30)  # Double ended queue of the last 30 frames
 
@@ -63,7 +67,6 @@ def filter_top_k(results, model, top_k):
             filtered.append((label, conf, coords))
 
     return filtered
-
 
 # Draw a info panel on rhs
 def draw_sidebar(frame, fps, detection_counts, total_objects):
@@ -124,11 +127,19 @@ while True:
 
     frame_count += 1
     if frame_count % SKIP_FRAMES == 0:
-        karate_results = model(frame, conf=CONFIDENCE_THRESHOLD, verbose=False)
+        karate_results = karate_model(frame, conf=CONFIDENCE_THRESHOLD, verbose=False)
         last_results   = karate_results   # update only, no drawing here
 
+    if frame_count % BODY_SKIP_FRAMES == 0:
+        last_body_results = body_model(
+        frame,
+        conf=CONFIDENCE_THRESHOLD,
+        imgsz=640,
+        classes=[0, 1, 4],
+        verbose=False
+    )
     # All drawing happens here, every frame
-    detections = filter_top_k(last_results, model, TOP_K)
+    detections = filter_top_k(last_results, karate_model, TOP_K)
 
     detection_counts = defaultdict(int)
     total_objects    = 0
@@ -137,8 +148,15 @@ while True:
         detection_counts[label] += 1
         total_objects += 1
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 100), 1)
-        #cv2.putText(frame, f"{label} {conf:.0%}", (x1+3, y1-8),
-        #            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 100), 2)
+
+    for result in last_body_results:
+        for box in result.boxes:
+            x1, y1, x2, y2 = map(int, box.xyxy[0])
+            label = body_model.names[int(box.cls[0])]
+            conf  = float(box.conf[0])
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 165, 0), 1)
+            cv2.putText(frame, f"{label} {conf:.0%}", (x1+3, y1-8),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 165, 0), 1)
 
     if not ret:
         print("Error: failed to read frame")
@@ -154,7 +172,7 @@ while True:
             x1, y1, x2, y2 = map(int, box.xyxy[0])
             confidence = float(box.conf[0])
             class_id = int(box.cls[0])
-            label = model.names[int(box.cls[0])]
+            label = karate_model.names[int(box.cls[0])]
             detection_counts[label] += 1
             total_objects += 1
 
