@@ -6,7 +6,7 @@ from collections import deque, defaultdict
 # Load model weights, human_body_detector or hand_detector
 model = YOLO("dataset/detector v2.pt")
 # Open camera, can also use filepath for video
-cap = cv2.VideoCapture("test 2.mp4")
+cap = cv2.VideoCapture("test.mp4")
 if not cap.isOpened():
     print("Error: could not open camera")
     exit()
@@ -15,7 +15,7 @@ if not cap.isOpened():
 frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 fps_out = 15  # video fps
-fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+fourcc = cv2.VideoWriter_fourcc(*"mp4v") # type: ignore
 out = cv2.VideoWriter("output.mp4", fourcc, fps_out, (frame_width, frame_height))
 
 
@@ -118,31 +118,27 @@ def draw_sidebar(frame, fps, detection_counts, total_objects):
 
 
 while True:
-    # Frame is a 3d array containing image data
     ret, frame = cap.read()
     if not ret:
         break
-    # frame = cv2.flip(frame, 1)
 
     frame_count += 1
     if frame_count % SKIP_FRAMES == 0:
-        # run inference on every other frame
-        # model is called like a function to analyze the current frame, specify imgsz for optimization
-        last_results = model(frame, conf=CONFIDENCE_THRESHOLD, verbose=False)
+        karate_results = model(frame, conf=CONFIDENCE_THRESHOLD, verbose=False)
+        last_results   = karate_results   # update only, no drawing here
 
-        detections = filter_top_k(last_results, model, TOP_K)
+    # All drawing happens here, every frame
+    detections = filter_top_k(last_results, model, TOP_K)
 
-        for label, conf, (x1, y1, x2, y2) in detections:
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 100), 2)
-            cv2.putText(
-                frame,
-                f"{label} {conf:.0%}",
-                (x1 + 3, y1 - 8),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                (0, 255, 100),
-                2,
-            )
+    detection_counts = defaultdict(int)
+    total_objects    = 0
+
+    for label, conf, (x1, y1, x2, y2) in detections:
+        detection_counts[label] += 1
+        total_objects += 1
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 100), 1)
+        #cv2.putText(frame, f"{label} {conf:.0%}", (x1+3, y1-8),
+        #            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 100), 2)
 
     if not ret:
         print("Error: failed to read frame")
