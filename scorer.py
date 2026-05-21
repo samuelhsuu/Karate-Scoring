@@ -4,8 +4,7 @@ import time
 from collections import deque, defaultdict
 
 # Load model weights
-karate_model = YOLO("dataset/karate detector.pt")
-body_model = YOLO("dataset/head-body detector.pt")
+karate_model = YOLO("head_body.pt")
 # Open camera, can also use filepath for video
 cap = cv2.VideoCapture("test.mp4")
 if not cap.isOpened():
@@ -28,9 +27,6 @@ prev_time = time.time()
 SKIP_FRAMES = 2
 frame_count = 0
 last_results = []  # previous frame detections
-
-last_body_results = [] # previous body detections
-BODY_SKIP_FRAMES = 3 # Head and body move less than hands and feet
 
 fps_history = deque(maxlen=30)  # Double ended queue of the last 30 frames
 
@@ -130,14 +126,6 @@ while True:
         karate_results = karate_model(frame, conf=CONFIDENCE_THRESHOLD, verbose=False)
         last_results   = karate_results   # update only, no drawing here
 
-    if frame_count % BODY_SKIP_FRAMES == 0:
-        last_body_results = body_model(
-        frame,
-        conf=CONFIDENCE_THRESHOLD,
-        imgsz=640,
-        classes=[0, 1, 4],
-        verbose=False
-    )
     # All drawing happens here, every frame
     detections = filter_top_k(last_results, karate_model, TOP_K)
 
@@ -148,15 +136,6 @@ while True:
         detection_counts[label] += 1
         total_objects += 1
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 100), 1)
-
-    for result in last_body_results:
-        for box in result.boxes:
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            label = body_model.names[int(box.cls[0])]
-            conf  = float(box.conf[0])
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 165, 0), 1)
-            cv2.putText(frame, f"{label} {conf:.0%}", (x1+3, y1-8),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 165, 0), 1)
 
     if not ret:
         print("Error: failed to read frame")
