@@ -1,9 +1,13 @@
 ## End Goal
 Have an automated scoring system that can be used to assist referees in real matches
 
+### Before
 ![demo](demo_gif.gif)
 
-**Current progress:** Able to track and differentiate athletes in real-time along with their respective gloves and feet
+### After
+https://github.com/user-attachments/assets/ad212af0-e90b-467d-a336-efd7b78a0a7b#t=0.001
+
+**Current progress:** Able to track and differentiate athletes in real-time along with their respective gloves and feet, as well as their heads and bodies
 **Next Goal:** Collision detection and scoring logic
 
 ## Tools
