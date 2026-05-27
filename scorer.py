@@ -24,7 +24,7 @@ CONFIDENCE_THRESHOLD = 0.5
 prev_time = time.time()
 
 # Running inference on every other frame for optimization
-SKIP_FRAMES = 2
+SKIP_FRAMES = 1
 frame_count = 0
 last_results = []  # previous frame detections
 
@@ -34,7 +34,7 @@ detect_font = cv2.FONT_HERSHEY_PLAIN
 UI_font = cv2.FONT_HERSHEY_SIMPLEX
 
 TOP_K = {
-    "blue fighter": 1,
+    "blue-fighter": 1,
     "red-fighter": 1,
     "red-glove": 2,
     "blue-glove": 2,
@@ -42,6 +42,17 @@ TOP_K = {
     "blue-foot": 2,
 }
 
+# Color coding
+CLASS_COLORS = {
+    "blue-fighter": (255, 180, 0),
+    "red-fighter": (0, 0, 180),
+    "blue-glove":  (255, 180, 0),
+    "red-glove":   (0, 0, 180),
+    "blue-foot":   (255, 180, 0),
+    "red-foot":    (0, 0, 180),
+    "head":        (0, 255, 0),
+    "body":        (0, 255, 0),
+}
 
 # Filter for 2 athletes
 def filter_top_k(results, model, top_k):
@@ -124,18 +135,18 @@ while True:
     frame_count += 1
     if frame_count % SKIP_FRAMES == 0:
         karate_results = karate_model(frame, conf=CONFIDENCE_THRESHOLD, verbose=False)
-        last_results   = karate_results   # update only, no drawing here
+        last_results   = karate_results   # update only, no drawing
 
     # All drawing happens here, every frame
     detections = filter_top_k(last_results, karate_model, TOP_K)
 
     detection_counts = defaultdict(int)
-    total_objects    = 0
+    total_objects = 0
 
     for label, conf, (x1, y1, x2, y2) in detections:
         detection_counts[label] += 1
         total_objects += 1
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 100), 1)
+        # cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 100), 1)
 
     if not ret:
         print("Error: failed to read frame")
@@ -155,12 +166,12 @@ while True:
             detection_counts[label] += 1
             total_objects += 1
 
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 100), 1)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), CLASS_COLORS.get(label, (255, 180, 0)), 1)
 
             text = f"{label} {confidence:.0%}"
             (tw, th), _ = cv2.getTextSize(text, detect_font, 1, 2)
             cv2.rectangle(
-                frame, (x1, y1 - th - 8), (x1 + tw + 6, y1), (0, 255, 100), -1
+                frame, (x1, y1 - th - 8), (x1 + tw + 6, y1), CLASS_COLORS.get(label, (255, 180, 0)), -1
             )
 
             cv2.putText(frame, text, (x1 + 3, y1 - 4), detect_font, 1, (0, 0, 0), 2)
