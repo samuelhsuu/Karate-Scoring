@@ -40,6 +40,8 @@ TOP_K = {
     "blue-glove": 2,
     "red-foot": 2,
     "blue-foot": 2,
+    "body" : 2,
+    "head" : 2,
 }
 
 # Color coding
@@ -69,10 +71,9 @@ def filter_top_k(results, model, top_k):
     filtered = []
     for label, detections in class_detections.items():
         limit = top_k.get(label, 1)
-        detections.sort(key=lambda x: -x[0])  # Sort by decreasing confidence
+        detections.sort(key=lambda x: x[0])  # Sort by decreasing confidence
         for conf, coords, box in detections[:limit:]:
             filtered.append((label, conf, coords))
-
     return filtered
 
 # Draw a info panel on rhs
@@ -112,7 +113,7 @@ def draw_sidebar(frame, fps, detection_counts, total_objects):
     # Per-class counts
     cv2.putText(frame, "Class        Count", (x, y), UI_font, 0.42, (80, 80, 110), 1)
     y += LINE_H
-
+    
     for class_name, count in sorted(
         detection_counts.items(), key=lambda item: -item[1]
     ):
@@ -126,12 +127,11 @@ def draw_sidebar(frame, fps, detection_counts, total_objects):
         frame, f"Total: {total_objects}", (x, h - 20), UI_font, 0.5, (100, 200, 255), 1
     )
 
-
 while True:
     ret, frame = cap.read()
     if not ret:
         break
-
+    cv2.putText(frame, "hi", (0,0),cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0,0,255),3)
     frame_count += 1
     if frame_count % SKIP_FRAMES == 0:
         karate_results = karate_model(frame, conf=CONFIDENCE_THRESHOLD, verbose=False)
@@ -146,7 +146,7 @@ while True:
     for label, conf, (x1, y1, x2, y2) in detections:
         detection_counts[label] += 1
         total_objects += 1
-        # cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 100), 1)
+        #cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 100), 1)
 
     if not ret:
         print("Error: failed to read frame")
@@ -154,28 +154,20 @@ while True:
 
     detection_counts = defaultdict(int)
     total_objects = 0
-    # results only really has one item (the current frame)
-    for result in last_results:
+    for label, conf, coords in detections:
+        detection_counts[label] += 1
+        total_objects += 1
+        x1,y1,x2,y2 = map(int, coords)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), CLASS_COLORS.get(label, (255, 180, 0)), 1)
 
-        # each box has all detections >0.4 confidence
-        for box in result.boxes:
-            x1, y1, x2, y2 = map(int, box.xyxy[0])
-            confidence = float(box.conf[0])
-            class_id = int(box.cls[0])
-            label = karate_model.names[int(box.cls[0])]
-            detection_counts[label] += 1
-            total_objects += 1
+        text = f"{label} {conf:.0%}"
+        (tw, th), _ = cv2.getTextSize(text, detect_font, 1, 2)
+        cv2.rectangle(
+            frame, (x1, y1 - th - 8), (x1 + tw + 6, y1), CLASS_COLORS.get(label, (255, 180, 0)), -1
+        )
 
-            cv2.rectangle(frame, (x1, y1), (x2, y2), CLASS_COLORS.get(label, (255, 180, 0)), 1)
-
-            text = f"{label} {confidence:.0%}"
-            (tw, th), _ = cv2.getTextSize(text, detect_font, 1, 2)
-            cv2.rectangle(
-                frame, (x1, y1 - th - 8), (x1 + tw + 6, y1), CLASS_COLORS.get(label, (255, 180, 0)), -1
-            )
-
-            cv2.putText(frame, text, (x1 + 3, y1 - 4), detect_font, 1, (0, 0, 0), 2)
-
+        cv2.putText(frame, text, (x1 + 3, y1 - 4), detect_font, 1, (0, 0, 0), 2)
+        
     curr_time = time.time()
     fps_history.append(curr_time - prev_time)
     prev_time = curr_time
