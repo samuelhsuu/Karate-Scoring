@@ -5,7 +5,9 @@ Have an automated scoring system that can be used to assist referees in real mat
 ![demo](demo_gif.gif)
 
 ### Current
-https://github.com/user-attachments/assets/85147811-d809-4bde-9c9b-d0e8675236f3
+<video src="https://github.com/user-attachments/assets/85147811-d809-4bde-9c9b-d0e8675236f3" controls width="100%">
+  Your browser does not support the video tag.
+</video>
 
 **Current progress:** Able to track and differentiate athletes in real-time along with their respective gloves and feet, as well as their heads and bodies
 **Next Goal:** Collision detection and scoring logic
